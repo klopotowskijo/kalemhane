@@ -55,7 +55,6 @@
   .nav-btn{ display:flex; align-items:center; gap:10px; text-align:left; background:none; border:none; padding:9px 10px; border-radius:8px; font-family:'Inter',sans-serif; font-size:14px; font-weight:500; color:var(--ink-soft); cursor:pointer; width:100%; }
   .nav-btn:hover{ background:var(--paper-dim); color:var(--ink); }
   .nav-btn.active{ background:var(--accent-soft); color:var(--accent-strong); }
-  .nav-btn .dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.55;flex:none;}
   .sidebar-foot{ margin-top:auto; padding:10px; font-size:12px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:14px; }
   .theme-toggle{ background:none;border:1px solid var(--line);border-radius:8px; padding:6px 10px;font-size:12px;color:var(--ink-soft);cursor:pointer;margin-top:8px; }
   .main{ flex:1; padding:32px 40px 60px; max-width:980px; width:100%; margin:0 auto; }
@@ -64,20 +63,11 @@
   @keyframes fade{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
   .page-head p{ color:var(--ink-soft); margin-top:6px; font-size:14px; max-width:560px; }
   .card{ background:color-mix(in srgb, var(--paper-raised) calc(var(--panel-alpha) * 100%), transparent); border:1px solid var(--line); border-top:3px solid var(--accent); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow); }
-  html,body{height:100%;}
   body{ border:10px solid var(--accent); outline:2px solid var(--paper-dim); outline-offset:-18px; box-sizing:border-box; }
   .app{ display:flex; min-height:calc(100vh - 20px); }
   .page-head{
     margin-bottom:26px; padding:18px 26px; text-align:center; position:relative;
-    background:
-      linear-gradient(to right, var(--accent) 3px, transparent 3px) top left / 18px 3px no-repeat,
-      linear-gradient(var(--accent) 3px, transparent 3px) top left / 3px 18px no-repeat,
-      linear-gradient(to left, var(--accent) 3px, transparent 3px) top right / 18px 3px no-repeat,
-      linear-gradient(var(--accent) 3px, transparent 3px) top right / 3px 18px no-repeat,
-      linear-gradient(to right, var(--accent) 3px, transparent 3px) bottom left / 18px 3px no-repeat,
-      linear-gradient(to top, var(--accent) 3px, transparent 3px) bottom left / 3px 18px no-repeat,
-      linear-gradient(to left, var(--accent) 3px, transparent 3px) bottom right / 18px 3px no-repeat,
-      linear-gradient(to top, var(--accent) 3px, transparent 3px) bottom right / 3px 18px no-repeat;
+    border-bottom:1px solid var(--line);
   }
   .page-head p{ margin-left:auto; margin-right:auto; }
   .grid-2{ display:grid; grid-template-columns:1.3fr 1fr; gap:20px; align-items:start; }
@@ -121,6 +111,8 @@
   .chip.priority-low{ background:var(--paper-dim); color:var(--ink-soft); cursor:pointer; }
   .chip.priority-normal{ cursor:pointer; }
   .chip.recurring{ background:var(--accent-soft); color:var(--accent-strong); }
+  .chip.event{ background:var(--success-soft); color:var(--success); }
+  .event-bar{ width:4px; align-self:stretch; border-radius:3px; background:var(--success); flex:none; }
   .recur-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 4px; border-bottom:1px solid var(--line); font-size:13.5px; }
   .recur-row:last-child{ border-bottom:none; }
   .glance-block{ padding:12px 14px; border:1px solid var(--line); border-radius:8px; margin-bottom:10px; background:color-mix(in srgb, var(--paper) calc(var(--panel-alpha) * 100%), transparent); }
@@ -217,23 +209,23 @@
 <div class="app">
   <aside class="sidebar" id="sidebar">
     <div class="brand"><span class="mark"></span>Kalemhane</div>
-    <button class="nav-btn active" data-page="today"><span class="dot"></span>Today</button>
-    <button class="nav-btn" data-page="tasks"><span class="dot"></span>Tasks</button>
-    <button class="nav-btn" data-page="calendar"><span class="dot"></span>Calendar</button>
+    <button class="nav-btn active" data-page="today">Today</button>
+    <button class="nav-btn" data-page="tasks">Tasks</button>
+    <button class="nav-btn" data-page="calendar">Calendar</button>
     <div class="nav-section-label">Beyond campus</div>
-    <button class="nav-btn" data-page="work"><span class="dot"></span>Work</button>
-    <button class="nav-btn" data-page="personal"><span class="dot"></span>Personal</button>
+    <button class="nav-btn" data-page="work">Work</button>
+    <button class="nav-btn" data-page="personal">Personal</button>
     <div class="nav-section-label">Program</div>
-    <button class="nav-btn" data-page="courses"><span class="dot"></span>Semesters &amp; courses</button>
-    <button class="nav-btn" data-page="reading"><span class="dot"></span>Reading &amp; sources</button>
-    <button class="nav-btn" data-page="dissertation"><span class="dot"></span>Dissertation</button>
-    <button class="nav-btn" data-page="teaching"><span class="dot"></span>Teaching</button>
-    <button class="nav-btn" data-page="advisor"><span class="dot"></span>Advisor notes</button>
+    <button class="nav-btn" data-page="courses">Semesters &amp; courses</button>
+    <button class="nav-btn" data-page="reading">Reading &amp; sources</button>
+    <button class="nav-btn" data-page="dissertation">Dissertation</button>
+    <button class="nav-btn" data-page="teaching">Teaching</button>
+    <button class="nav-btn" data-page="advisor">Advisor notes</button>
     <div class="nav-section-label">Personalize</div>
-    <button class="nav-btn" data-page="personalize"><span class="dot"></span>Appearance &amp; sound</button>
+    <button class="nav-btn" data-page="personalize">Appearance &amp; sound</button>
     <div class="nav-section-label">Logistics</div>
-    <button class="nav-btn" data-page="syllabus"><span class="dot"></span>Import deadlines</button>
-    <button class="nav-btn" data-page="budget"><span class="dot"></span>Budget</button>
+    <button class="nav-btn" data-page="syllabus">Import deadlines</button>
+    <button class="nav-btn" data-page="budget">Budget</button>
     <div class="sidebar-foot">
       Stored only on this device.
       <br>
@@ -305,7 +297,17 @@
 
     <!-- CALENDAR -->
     <section class="page" id="page-calendar">
-      <div class="page-head"><h1>Calendar</h1><p>Tasks with a due date show up here automatically.</p></div>
+      <div class="page-head"><h1>Calendar</h1><p>Tasks with a due date show up here automatically — add standalone events below for things that aren't really "to-dos" (a conference, a meeting, a trip).</p></div>
+      <div class="card" style="margin-bottom:18px;">
+        <h3 style="margin-bottom:10px; font-size:15px;">Add an event</h3>
+        <div class="row">
+          <div class="field" style="flex:2;"><label for="newEventTitle">Event</label><input id="newEventTitle" type="text" placeholder="e.g. Advisor meeting, 2pm"></div>
+          <div class="field"><label for="newEventDate">Date</label><input id="newEventDate" type="date"></div>
+          <div class="field"><label for="newEventEndDate">Ends (optional)</label><input id="newEventEndDate" type="date"></div>
+        </div>
+        <button class="btn" id="addEventBtn" type="button">Add event</button>
+        <p class="helper-text">Leave "Ends" blank for a single-day event, or set it for a multi-day span like a conference.</p>
+      </div>
       <div class="card">
         <div class="cal-head">
           <h3 id="calMonthLabel"></h3>
@@ -650,6 +652,7 @@ Nov 30 — CFP: Conference on Modern History, abstracts due"></textarea>
   state.dissertation = state.dissertation || [];
   state.advisorNotes = state.advisorNotes || [];
   state.recurring = state.recurring || [];
+  state.events = state.events || [];
   state.settings = Object.assign({ palette: "default", accent: null, accentStrong: null, accentSoft: null, bgType: "plain", bgImage: null, bgFade: 0.85, bgTileId: "tile_teal", bgRugId: "rug_red", panelAlpha: 0.88 }, state.settings || {});
   state.settings.today = Object.assign({ budget: true, dissertation: true, reading: true }, state.settings.today || {});
 
@@ -958,6 +961,22 @@ Nov 30 — CFP: Conference on Modern History, abstracts due"></textarea>
     wireTaskRows(el);
   }
 
+  document.getElementById("newEventDate").value = todayISO();
+  document.getElementById("addEventBtn").addEventListener("click", function(){
+    var titleEl = document.getElementById("newEventTitle");
+    var dateEl = document.getElementById("newEventDate");
+    var endEl = document.getElementById("newEventEndDate");
+    var title = titleEl.value.trim();
+    if (!title){ toast("Give the event a name first."); return; }
+    var date = dateEl.value || todayISO();
+    var endDate = endEl.value || null;
+    if (endDate && endDate < date){ toast("End date can't be before the start date."); return; }
+    state.events.push({ id: uid(), title: title, date: date, endDate: endDate });
+    save(); titleEl.value = ""; endEl.value = "";
+    renderCalendar();
+    toast("Event added.");
+  });
+
   /* ---------- WORK & PERSONAL (simple context-tagged task lists) ---------- */
   function makeContextSection(context, prefix){
     document.getElementById("new" + prefix + "Date").value = todayISO();
@@ -998,7 +1017,7 @@ Nov 30 — CFP: Conference on Modern History, abstracts due"></textarea>
   /* ---------- TODAY ---------- */
   function renderToday(){
     document.getElementById("todayDate").textContent = new Date().toLocaleDateString(undefined, { weekday:"long", month:"long", day:"numeric", year:"numeric" });
-    var upcoming = state.tasks.filter(function(t){ return !t.done && t.date && t.context !== "personal"; }).sort(function(a,b){ var pOrder={high:0,normal:1,low:2}; return a.date.localeCompare(b.date) || (pOrder[a.priority]-pOrder[b.priority]); }).slice(0,6);
+    var upcoming = state.tasks.filter(function(t){ return !t.done && t.date && t.context !== "personal"; }).sort(function(a,b){ var pOrder={high:0,normal:1,low:2}; return a.date.localeCompare(b.date) || (pOrder[a.priority]-pOrder[b.priority]); }).slice(0,15);
     var el = document.getElementById("dueSoonList");
     el.innerHTML = upcoming.length ? upcoming.map(function(t){
       return '<div class="task-item"><div class="task-body"><div class="task-title">' + escapeHtml(t.title) + '</div><div class="task-meta">' + taskMetaHtml(t) + '</div></div></div>';
@@ -1047,6 +1066,7 @@ Nov 30 — CFP: Conference on Modern History, abstracts due"></textarea>
   document.getElementById("calNext").addEventListener("click", function(){ calCursor.setMonth(calCursor.getMonth()+1); renderCalendar(); });
   document.getElementById("calToday").addEventListener("click", function(){ calCursor = new Date(); calCursor.setDate(1); selectedDay = todayISO(); renderCalendar(); });
   function tasksOnDate(iso){ return state.tasks.filter(function(t){ return t.date === iso; }); }
+  function eventsOnDate(iso){ return state.events.filter(function(e){ return iso >= e.date && iso <= (e.endDate || e.date); }); }
   function renderCalendar(){
     document.getElementById("calMonthLabel").textContent = calCursor.toLocaleDateString(undefined, { month:"long", year:"numeric" });
     var grid = document.getElementById("calGrid");
@@ -1063,7 +1083,7 @@ Nov 30 — CFP: Conference on Modern History, abstracts due"></textarea>
     var todayIso = todayISO();
     html += cells.map(function(c){
       var classes = "cal-cell" + (c.muted ? " muted" : "") + (c.iso === todayIso ? " today" : "") + (c.iso === selectedDay ? " selected" : "");
-      var count = c.iso ? tasksOnDate(c.iso).length : 0;
+      var count = c.iso ? (tasksOnDate(c.iso).length + eventsOnDate(c.iso).length) : 0;
       var dots = ""; for (var i2=0;i2<Math.min(count,4);i2++) dots += '<span class="cal-dot"></span>';
       return '<div class="' + classes + '" data-iso="' + (c.iso||"") + '"><div class="cal-daynum">' + c.day + '</div>' + (count ? '<div class="cal-dots">' + dots + '</div>' : '') + '</div>';
     }).join("");
@@ -1073,14 +1093,24 @@ Nov 30 — CFP: Conference on Modern History, abstracts due"></textarea>
     });
     renderDayPanel();
   }
+  function eventRowHtml(e){
+    var range = e.endDate && e.endDate !== e.date ? (formatDateHuman(e.date) + '–' + formatDateHuman(e.endDate)) : formatDateHuman(e.date);
+    return '<div class="task-item"><div class="event-bar"></div><div class="task-body"><div class="task-title">' + escapeHtml(e.title) + '</div><div class="task-meta"><span class="chip event">Event</span><span class="chip outline">' + range + '</span></div></div><button class="icon-btn" data-delevent="' + e.id + '">✕</button></div>';
+  }
+  function deleteEvent(id){
+    state.events = state.events.filter(function(e){ return e.id !== id; });
+    save(); renderCalendar();
+  }
   function renderDayPanel(){
     var panel = document.getElementById("dayPanel");
     if (!selectedDay){ panel.innerHTML = ""; return; }
     var items = tasksOnDate(selectedDay);
+    var dayEvents = eventsOnDate(selectedDay);
     var heading = parseISO(selectedDay).toLocaleDateString(undefined, { weekday:"long", month:"long", day:"numeric" });
-    if (!items.length){ panel.innerHTML = '<h3 style="margin-bottom:8px; font-size:15px;">' + heading + '</h3><div class="empty">Nothing due this day.</div>'; return; }
-    panel.innerHTML = '<h3 style="margin-bottom:8px; font-size:15px;">' + heading + '</h3>' + items.map(taskRowHtml).join("");
+    if (!items.length && !dayEvents.length){ panel.innerHTML = '<h3 style="margin-bottom:8px; font-size:15px;">' + heading + '</h3><div class="empty">Nothing due this day.</div>'; return; }
+    panel.innerHTML = '<h3 style="margin-bottom:8px; font-size:15px;">' + heading + '</h3>' + dayEvents.map(eventRowHtml).join("") + items.map(taskRowHtml).join("");
     wireTaskRows(panel);
+    panel.querySelectorAll("[data-delevent]").forEach(function(b){ b.addEventListener("click", function(){ deleteEvent(b.getAttribute("data-delevent")); }); });
   }
 
   /* ---------- READING & SOURCES ---------- */
@@ -1521,7 +1551,7 @@ Nov 30 — CFP: Conference on Modern History, abstracts due"></textarea>
     } else if (t === "rug"){
       var rugImg = RUG_ART[state.settings.bgRugId] || RUG_ART.rug_red;
       layer.style.backgroundImage = "url(" + rugImg + ")";
-      layer.style.backgroundSize = "contain";
+      layer.style.backgroundSize = "cover";
       layer.style.backgroundRepeat = "no-repeat";
       layer.style.backgroundPosition = "center";
       overlay.style.opacity = state.settings.bgFade;
