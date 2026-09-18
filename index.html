@@ -105,6 +105,12 @@
   .subtask-add-row input{ flex:1; font-size:12.5px; padding:5px 8px; }
   .subtask-toggle-add{ display:block; background:none; border:none; cursor:pointer; font-size:12px; color:var(--ink-soft); padding:2px 0 8px 44px; }
   .subtask-toggle-add:hover{ color:var(--accent-strong); }
+  .note-board{ display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:18px; }
+  .note-card{ background:color-mix(in srgb, var(--paper-raised) calc(var(--panel-alpha) * 100%), transparent); border:1px solid var(--line); border-top:3px solid var(--accent); border-radius:8px; padding:14px; box-shadow:var(--shadow); position:relative; }
+  .note-card h4{ font-family:'Lora',serif; font-size:14.5px; margin:0 0 8px; }
+  .note-content{ font-size:13.5px; white-space:pre-wrap; min-height:60px; cursor:text; line-height:1.5; outline:none; }
+  .note-content:focus{ background:var(--paper-dim); border-radius:5px; padding:2px 4px; margin:-2px -4px; }
+  .note-meta{ font-size:11px; color:var(--ink-soft); margin-top:10px; display:flex; justify-content:space-between; align-items:center; }
   .task-item > .icon-btn{ border-left:1px solid var(--line); padding-left:10px; margin-left:2px; }
   .txn-row > .icon-btn{ border-left:1px solid var(--line); padding-left:10px; margin-left:2px; }
   .task-check{ width:19px;height:19px; border-radius:5px; border:1.5px solid var(--ink-soft); flex:none; margin-top:2px; cursor:pointer; display:flex; align-items:center; justify-content:center; background:var(--paper-raised); }
@@ -226,6 +232,7 @@
     <div class="nav-section-label">Beyond campus</div>
     <button class="nav-btn" data-page="work">Work</button>
     <button class="nav-btn" data-page="personal">Personal</button>
+    <button class="nav-btn" data-page="notes">Noteboard</button>
     <div class="nav-section-label">Program</div>
     <button class="nav-btn" data-page="courses">Semesters &amp; courses</button>
     <button class="nav-btn" data-page="reading">Reading &amp; sources</button>
@@ -249,7 +256,7 @@
 
     <!-- TODAY -->
     <section class="page active" id="page-today">
-      <div class="page-head"><h1>Today</h1><p id="todayDate"></p><p class="helper-text">"Due soon" combines Work and School — Personal stays off this view on purpose.</p></div>
+      <div class="page-head"><h1>Today</h1><p id="todayDate"></p><p class="helper-text">"Due soon" combines Work and School, plus any Personal task you've opted into showing here.</p></div>
       <div class="grid-2">
         <div class="card">
           <h3 style="margin-bottom:10px;">Due soon</h3>
@@ -378,6 +385,17 @@
         <select id="personalFilter" style="margin-bottom:10px;"><option value="open">Open</option><option value="all">All</option><option value="done">Done</option></select>
         <div id="personalList"></div>
       </div>
+    </section>
+
+    <!-- NOTEBOARD -->
+    <section class="page" id="page-notes">
+      <div class="page-head"><h1>Noteboard</h1><p>Loose notes that don't belong on a task list — quick thoughts, scraps, things to remember.</p></div>
+      <div class="card" style="margin-bottom:18px;">
+        <div class="field"><label for="newNoteTitle">Title (optional)</label><input id="newNoteTitle" type="text" placeholder="e.g. Archive call numbers"></div>
+        <div class="field"><label for="newNoteContent">Note</label><textarea id="newNoteContent" class="tall" placeholder="Jot it down..."></textarea></div>
+        <button class="btn" id="addNoteBtn" type="button">Pin note</button>
+      </div>
+      <div class="note-board" id="noteBoard"></div>
     </section>
 
     <!-- COURSES & SEMESTERS -->
@@ -665,6 +683,7 @@ Nov 30 — CFP: Conference on Modern History, abstracts due"></textarea>
   state.advisorNotes = state.advisorNotes || [];
   state.recurring = state.recurring || [];
   state.events = state.events || [];
+  state.notes = state.notes || [];
   state.settings = Object.assign({ palette: "default", accent: null, accentStrong: null, accentSoft: null, bgType: "plain", bgImage: null, bgFade: 0.85, bgTileId: "tile_teal", bgRugId: "rug_red", panelAlpha: 0.88 }, state.settings || {});
   state.settings.today = Object.assign({ budget: true, dissertation: true, reading: true }, state.settings.today || {});
 
@@ -769,6 +788,7 @@ Nov 30 — CFP: Conference on Modern History, abstracts due"></textarea>
     if (target === "tasks") renderTasks();
     if (target === "work") renderWork();
     if (target === "personal") renderPersonal();
+    if (target === "notes") renderNotes();
     if (target === "calendar") renderCalendar();
     if (target === "courses") renderCourses();
     if (target === "reading") renderSources();
@@ -1070,6 +1090,42 @@ Nov 30 — CFP: Conference on Modern History, abstracts due"></textarea>
     toast("Event added.");
   });
 
+  /* ---------- NOTEBOARD ---------- */
+  function renderNotes(){
+    var board = document.getElementById("noteBoard");
+    var list = state.notes.slice().sort(function(a,b){ return b.updatedAt.localeCompare(a.updatedAt); });
+    if (!list.length){ board.innerHTML = '<div class="empty">Nothing pinned yet.</div>'; return; }
+    board.innerHTML = list.map(function(n){
+      return '<div class="note-card">' +
+        (n.title ? '<h4>' + escapeHtml(n.title) + '</h4>' : '') +
+        '<div class="note-content" contenteditable="true" data-noteedit="' + n.id + '">' + escapeHtml(n.content) + '</div>' +
+        '<div class="note-meta"><span>' + formatDateHuman(n.updatedAt.slice(0,10)) + '</span><button class="icon-btn" data-delnote="' + n.id + '">✕</button></div>' +
+      '</div>';
+    }).join("");
+    board.querySelectorAll("[data-delnote]").forEach(function(b){ b.addEventListener("click", function(){ deleteNote(b.getAttribute("data-delnote")); }); });
+    board.querySelectorAll("[data-noteedit]").forEach(function(el){
+      el.addEventListener("blur", function(){ updateNoteContent(el.getAttribute("data-noteedit"), el.textContent); });
+    });
+  }
+  function updateNoteContent(id, text){
+    var n = state.notes.find(function(x){ return x.id === id; });
+    if (n){ n.content = text; n.updatedAt = new Date().toISOString(); save(); }
+  }
+  function deleteNote(id){
+    state.notes = state.notes.filter(function(n){ return n.id !== id; });
+    save(); renderNotes();
+  }
+  document.getElementById("addNoteBtn").addEventListener("click", function(){
+    var titleEl = document.getElementById("newNoteTitle");
+    var contentEl = document.getElementById("newNoteContent");
+    var content = contentEl.value.trim();
+    if (!content){ toast("Write something in the note first."); return; }
+    state.notes.push({ id: uid(), title: titleEl.value.trim(), content: content, updatedAt: new Date().toISOString() });
+    save(); titleEl.value = ""; contentEl.value = "";
+    renderNotes();
+    toast("Note pinned.");
+  });
+
   /* ---------- WORK & PERSONAL (simple context-tagged task lists) ---------- */
   function makeContextSection(context, prefix){
     document.getElementById("new" + prefix + "Date").value = todayISO();
@@ -1112,7 +1168,7 @@ Nov 30 — CFP: Conference on Modern History, abstracts due"></textarea>
   /* ---------- TODAY ---------- */
   function renderToday(){
     document.getElementById("todayDate").textContent = new Date().toLocaleDateString(undefined, { weekday:"long", month:"long", day:"numeric", year:"numeric" });
-    var upcoming = state.tasks.filter(function(t){ return !t.done && t.date && t.context !== "personal"; }).sort(function(a,b){ var pOrder={high:0,normal:1,low:2}; return a.date.localeCompare(b.date) || (pOrder[a.priority]-pOrder[b.priority]); }).slice(0,15);
+    var upcoming = state.tasks.filter(function(t){ return !t.done && t.date && (t.context !== "personal" || t.showInTasks); }).sort(function(a,b){ var pOrder={high:0,normal:1,low:2}; return a.date.localeCompare(b.date) || (pOrder[a.priority]-pOrder[b.priority]); }).slice(0,15);
     var el = document.getElementById("dueSoonList");
     el.innerHTML = upcoming.length ? upcoming.map(function(t){
       return '<div class="task-item"><div class="task-body"><div class="task-title">' + escapeHtml(t.title) + '</div><div class="task-meta">' + taskMetaHtml(t) + '</div></div></div>';
@@ -1858,7 +1914,7 @@ Nov 30 — CFP: Conference on Modern History, abstracts due"></textarea>
   applyPanelAlpha();
   refreshCourseSelects();
   ensureRecurringInstances();
-  renderToday(); renderTasks(); renderWork(); renderPersonal(); renderCalendar(); renderCourses(); renderSources(); renderDissertation(); renderTeaching(); renderAdvisor(); renderPersonalize(); renderTrackList(); renderBudget(); renderRecurringList();
+  renderToday(); renderTasks(); renderWork(); renderPersonal(); renderNotes(); renderCalendar(); renderCourses(); renderSources(); renderDissertation(); renderTeaching(); renderAdvisor(); renderPersonalize(); renderTrackList(); renderBudget(); renderRecurringList();
 })();
 </script>
 </body>
