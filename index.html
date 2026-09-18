@@ -92,10 +92,21 @@
   button.btn.small{ padding:6px 10px; font-size:12.5px; }
   button.icon-btn{ background:none;border:none;cursor:pointer;color:var(--ink-soft);font-size:15px;padding:4px 6px;border-radius:6px; }
   button.icon-btn:hover{ background:var(--paper-dim); color:var(--danger); }
-  .task-item{ display:flex; align-items:flex-start; gap:10px; padding:11px 4px; border-bottom:1px solid var(--line); }
+  .task-block{ border-bottom:1px solid var(--line); }
+  .task-block:last-child{ border-bottom:none; }
+  .task-item{ display:flex; align-items:flex-start; gap:10px; padding:11px 4px; }
+  .subtask-list{ margin:0 0 4px 44px; }
+  .subtask-row{ display:flex; align-items:center; gap:8px; padding:4px 0; font-size:13px; }
+  .subtask-check{ width:15px;height:15px; border-radius:4px; border:1.5px solid var(--ink-soft); flex:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:9px; background:var(--paper-raised); }
+  .subtask-check.checked{ background:var(--success); border-color:var(--success); color:#fff; }
+  .subtask-title{ flex:1; }
+  .subtask-title.done{ text-decoration:line-through; color:var(--ink-soft); }
+  .subtask-add-row{ display:flex; gap:6px; margin:2px 0 10px 44px; }
+  .subtask-add-row input{ flex:1; font-size:12.5px; padding:5px 8px; }
+  .subtask-toggle-add{ display:block; background:none; border:none; cursor:pointer; font-size:12px; color:var(--ink-soft); padding:2px 0 8px 44px; }
+  .subtask-toggle-add:hover{ color:var(--accent-strong); }
   .task-item > .icon-btn{ border-left:1px solid var(--line); padding-left:10px; margin-left:2px; }
   .txn-row > .icon-btn{ border-left:1px solid var(--line); padding-left:10px; margin-left:2px; }
-  .task-item:last-child{ border-bottom:none; }
   .task-check{ width:19px;height:19px; border-radius:5px; border:1.5px solid var(--ink-soft); flex:none; margin-top:2px; cursor:pointer; display:flex; align-items:center; justify-content:center; background:var(--paper-raised); }
   .task-check.checked{ background:var(--success); border-color:var(--success); color:#fff; font-size:12px; }
   .task-body{ flex:1; min-width:0; }
@@ -360,6 +371,7 @@
             <select id="newPersonalFrequency" style="max-width:150px;"><option value="weekly">Every week</option><option value="monthly">Every month</option></select>
           </div>
         </div>
+        <label style="display:flex; align-items:center; gap:6px; font-weight:400; color:var(--ink); margin-bottom:12px;"><input type="checkbox" id="newPersonalShowInTasks" style="width:auto;"> Also show this on the Tasks page</label>
         <button class="btn" id="addPersonalBtn" type="button">Add task</button>
       </div>
       <div class="card">
@@ -663,6 +675,8 @@ Nov 30 — CFP: Conference on Modern History, abstracts due"></textarea>
   state.tasks.forEach(function(t){
     if (!t.context) t.context = "school";
     if (!t.priority) t.priority = "normal";
+    if (!t.subtasks) t.subtasks = [];
+    if (t.showInTasks === undefined) t.showInTasks = false;
   });
   state.tasks.forEach(function(t){
     if (t.course && !t.courseId){
@@ -850,7 +864,7 @@ Nov 30 — CFP: Conference on Modern History, abstracts due"></textarea>
       var guard = 0;
       while (lastDate < todayISO() && guard < 60){
         lastDate = stepDate(lastDate, rec.frequency);
-        state.tasks.push({ id: uid(), title: rec.title, date: lastDate, courseId: rec.courseId || null, done: false, context: rec.context, priority: rec.priority || "normal", recurringId: rec.id });
+        state.tasks.push({ id: uid(), title: rec.title, date: lastDate, courseId: rec.courseId || null, done: false, context: rec.context, priority: rec.priority || "normal", recurringId: rec.id, showInTasks: !!rec.showInTasks });
         changed = true;
         guard++;
       }
@@ -861,11 +875,11 @@ Nov 30 — CFP: Conference on Modern History, abstracts due"></textarea>
     var recurringId = null;
     if (opts.repeat){
       if (!opts.date){ toast("Repeating tasks need a due date to start from."); return false; }
-      var tmpl = { id: uid(), title: opts.title, courseId: opts.courseId || null, context: opts.context, frequency: opts.frequency, priority: opts.priority || "normal", anchorDate: opts.date };
+      var tmpl = { id: uid(), title: opts.title, courseId: opts.courseId || null, context: opts.context, frequency: opts.frequency, priority: opts.priority || "normal", anchorDate: opts.date, showInTasks: !!opts.showInTasks };
       state.recurring.push(tmpl);
       recurringId = tmpl.id;
     }
-    state.tasks.push({ id: uid(), title: opts.title, date: opts.date, courseId: opts.courseId || null, done: false, context: opts.context, priority: opts.priority || "normal", recurringId: recurringId });
+    state.tasks.push({ id: uid(), title: opts.title, date: opts.date, courseId: opts.courseId || null, done: false, context: opts.context, priority: opts.priority || "normal", recurringId: recurringId, showInTasks: !!opts.showInTasks });
     save();
     return true;
   }
@@ -906,17 +920,20 @@ Nov 30 — CFP: Conference on Modern History, abstracts due"></textarea>
 
   function toggleTask(id){
     var t = state.tasks.find(function(x){ return x.id === id; });
-    if (t){ t.done = !t.done; save(); renderTasks(); renderToday(); renderCalendar(); renderTeaching(); }
+    if (t){ t.done = !t.done; save(); refreshTaskViews(); }
   }
   function deleteTask(id){
     state.tasks = state.tasks.filter(function(x){ return x.id !== id; });
-    save(); renderTasks(); renderToday(); renderCalendar(); renderTeaching();
+    save(); refreshTaskViews();
   }
   function taskMetaHtml(t){
     var bits = [];
     if (t.courseId) bits.push(courseChipHtml(t.courseId));
     if (!t.courseId && t.context === "work") bits.push('<span class="chip work">Work</span>');
-    if (!t.courseId && t.context === "personal") bits.push('<span class="chip personal">Personal</span>');
+    if (!t.courseId && t.context === "personal"){
+      bits.push('<span class="chip personal">Personal</span>');
+      bits.push('<span class="chip' + (t.showInTasks ? "" : " outline") + '" data-toggleintasks="' + t.id + '" style="cursor:pointer;" title="Click to toggle whether this also shows on the Tasks page">' + (t.showInTasks ? "Shows in Tasks" : "Personal only") + '</span>');
+    }
     if (t.priority === "high") bits.push('<span class="chip priority-high" data-cyclepriority="' + t.id + '" title="Click to change priority">High</span>');
     else if (t.priority === "low") bits.push('<span class="chip priority-low" data-cyclepriority="' + t.id + '" title="Click to change priority">Low</span>');
     else bits.push('<span class="chip outline priority-normal" data-cyclepriority="' + t.id + '" title="Click to change priority">Normal</span>');
@@ -932,24 +949,100 @@ Nov 30 — CFP: Conference on Modern History, abstracts due"></textarea>
     if (!t) return;
     var order = { normal: "high", high: "low", low: "normal" };
     t.priority = order[t.priority] || "normal";
-    save(); renderTasks(); renderWork(); renderPersonal(); renderToday(); renderCalendar(); renderTeaching();
+    save(); refreshTaskViews();
+  }
+  function subtaskProgressChip(t){
+    if (!t.subtasks || !t.subtasks.length) return "";
+    var doneCount = t.subtasks.filter(function(s){ return s.done; }).length;
+    return ' <span class="chip outline">' + doneCount + '/' + t.subtasks.length + '</span>';
+  }
+  function subtasksBlockHtml(t){
+    var subs = t.subtasks || [];
+    var rows = subs.map(function(s){
+      return '<div class="subtask-row"><button class="subtask-check' + (s.done ? " checked" : "") + '" data-subtoggle="' + t.id + '|' + s.id + '">' + (s.done ? "✓" : "") + '</button>' +
+        '<span class="subtask-title' + (s.done ? " done" : "") + '">' + escapeHtml(s.title) + '</span>' +
+        '<button class="icon-btn" data-subdel="' + t.id + '|' + s.id + '" style="font-size:11px;">✕</button></div>';
+    }).join("");
+    return (rows ? '<div class="subtask-list">' + rows + '</div>' : "") +
+      '<button class="subtask-toggle-add" data-toggleadd="' + t.id + '" type="button">+ Add subtask</button>' +
+      '<div class="subtask-add-row" style="display:none;"><input type="text" placeholder="Add subtask..." data-subinput="' + t.id + '">' +
+      '<button class="btn secondary small" data-addsub="' + t.id + '" type="button">Add</button></div>';
   }
   function taskRowHtml(t){
-    return '<div class="task-item">' +
+    return '<div class="task-block"><div class="task-item">' +
       '<button class="task-check' + (t.done ? " checked" : "") + '" data-id="' + t.id + '" aria-label="Toggle done">' + (t.done ? "✓" : "") + '</button>' +
-      '<div class="task-body"><div class="task-title' + (t.done ? " done" : "") + '">' + escapeHtml(t.title) + '</div>' +
+      '<div class="task-body"><div class="task-title' + (t.done ? " done" : "") + '">' + escapeHtml(t.title) + subtaskProgressChip(t) + '</div>' +
       '<div class="task-meta">' + taskMetaHtml(t) + '</div></div>' +
-      '<button class="icon-btn" data-del="' + t.id + '" aria-label="Delete">✕</button></div>';
+      '<button class="icon-btn" data-del="' + t.id + '" aria-label="Delete">✕</button></div>' +
+      subtasksBlockHtml(t) +
+    '</div>';
+  }
+  function refreshTaskViews(){
+    renderTasks(); renderWork(); renderPersonal(); renderToday(); renderCalendar(); renderTeaching();
+  }
+  function toggleSubtask(taskId, subId){
+    var t = state.tasks.find(function(x){ return x.id === taskId; });
+    if (!t || !t.subtasks) return;
+    var s = t.subtasks.find(function(x){ return x.id === subId; });
+    if (s){ s.done = !s.done; save(); refreshTaskViews(); }
+  }
+  function deleteSubtask(taskId, subId){
+    var t = state.tasks.find(function(x){ return x.id === taskId; });
+    if (!t || !t.subtasks) return;
+    t.subtasks = t.subtasks.filter(function(x){ return x.id !== subId; });
+    save(); refreshTaskViews();
+  }
+  function addSubtask(taskId, title){
+    var t = state.tasks.find(function(x){ return x.id === taskId; });
+    if (!t || !title) return;
+    if (!t.subtasks) t.subtasks = [];
+    t.subtasks.push({ id: uid(), title: title, done: false });
+    save(); refreshTaskViews();
+  }
+  function toggleShowInTasks(id){
+    var t = state.tasks.find(function(x){ return x.id === id; });
+    if (t){ t.showInTasks = !t.showInTasks; save(); refreshTaskViews(); }
   }
   function wireTaskRows(el){
     el.querySelectorAll(".task-check").forEach(function(b){ b.addEventListener("click", function(){ toggleTask(b.getAttribute("data-id")); }); });
     el.querySelectorAll("[data-del]").forEach(function(b){ b.addEventListener("click", function(){ deleteTask(b.getAttribute("data-del")); }); });
     el.querySelectorAll("[data-cyclepriority]").forEach(function(b){ b.addEventListener("click", function(){ cyclePriority(b.getAttribute("data-cyclepriority")); }); });
+    el.querySelectorAll("[data-toggleintasks]").forEach(function(b){ b.addEventListener("click", function(){ toggleShowInTasks(b.getAttribute("data-toggleintasks")); }); });
+    el.querySelectorAll("[data-subtoggle]").forEach(function(b){
+      b.addEventListener("click", function(){ var p = b.getAttribute("data-subtoggle").split("|"); toggleSubtask(p[0], p[1]); });
+    });
+    el.querySelectorAll("[data-subdel]").forEach(function(b){
+      b.addEventListener("click", function(){ var p = b.getAttribute("data-subdel").split("|"); deleteSubtask(p[0], p[1]); });
+    });
+    el.querySelectorAll("[data-toggleadd]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var row = btn.nextElementSibling;
+        if (!row) return;
+        var opening = row.style.display === "none";
+        row.style.display = opening ? "flex" : "none";
+        if (opening) row.querySelector("input").focus();
+      });
+    });
+    el.querySelectorAll("[data-addsub]").forEach(function(b){
+      b.addEventListener("click", function(){
+        var input = b.closest(".subtask-add-row").querySelector("input");
+        var title = input.value.trim();
+        if (title) addSubtask(b.getAttribute("data-addsub"), title);
+      });
+    });
+    el.querySelectorAll("[data-subinput]").forEach(function(inp){
+      inp.addEventListener("keydown", function(e){
+        if (e.key !== "Enter") return;
+        var btn = inp.closest(".subtask-add-row").querySelector("[data-addsub]");
+        var title = inp.value.trim();
+        if (title) addSubtask(btn.getAttribute("data-addsub"), title);
+      });
+    });
   }
   function renderTasks(){
     var filter = document.getElementById("taskFilter").value;
     var sort = document.getElementById("taskSort").value;
-    var list = state.tasks.slice();
+    var list = state.tasks.slice().filter(function(t){ return t.context !== "personal" || t.showInTasks; });
     if (filter === "open") list = list.filter(function(t){ return !t.done; });
     if (filter === "done") list = list.filter(function(t){ return t.done; });
     if (sort === "date") list.sort(function(a,b){ return (a.date||"9999").localeCompare(b.date||"9999"); });
@@ -986,11 +1079,13 @@ Nov 30 — CFP: Conference on Modern History, abstracts due"></textarea>
       var priorityEl = document.getElementById("new" + prefix + "Priority");
       var repeatEl = document.getElementById("new" + prefix + "Repeat");
       var freqEl = document.getElementById("new" + prefix + "Frequency");
+      var showInTasksEl = document.getElementById("new" + prefix + "ShowInTasks");
       var title = titleEl.value.trim();
       if (!title){ toast("Give the task a name first."); return; }
-      var ok = addTaskCommon({ title: title, date: dateEl.value || null, courseId: null, context: context, priority: priorityEl.value, repeat: repeatEl.checked, frequency: freqEl.value });
+      var ok = addTaskCommon({ title: title, date: dateEl.value || null, courseId: null, context: context, priority: priorityEl.value, repeat: repeatEl.checked, frequency: freqEl.value, showInTasks: showInTasksEl ? showInTasksEl.checked : false });
       if (!ok) return;
       titleEl.value = ""; repeatEl.checked = false;
+      if (showInTasksEl) showInTasksEl.checked = false;
       renderWork(); renderPersonal(); renderTasks(); renderToday(); renderCalendar(); renderRecurringList();
       toast("Task added.");
     });
